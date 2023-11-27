@@ -1,30 +1,30 @@
-use super::IndexerClient;
+use super::indexer_client::IndexerClient;
 use super::http_error::HttpError;
-use reqwest::Response;
-
-pub struct Markets;
+use std::collections::HashMap;
+use serde_json::Value;
+pub struct Markets {}
 
 impl Markets {
-    pub async fn get_perpetual_markets(&self, client: &IndexerClient, markets: Vec<&str>) -> Result<Response, HttpError> {
+    pub async fn get_perpetual_markets(&self, indexer_client: &IndexerClient, markets: Vec<&str>) -> Result<Value, HttpError> {
         let endpoint = "/v4/perpetual-markets";
         let mut params = HashMap::new();
         params.insert("ticker", markets.join(","));
-        client.get(endpoint, Some(params)).await
+        indexer_client.get(endpoint, Some(params)).await
     }
 
-    pub async fn get_perpetual_markets(&self, client: &IndexerClient, market: &str) -> Result<Response, HttpError> {
-        let endpoint = format!("/v4/perpetual-markets/orderbooks/perpetualMarket/{}", market);
-        client.get(endpoint, None).await
+    pub async fn get_perpetual_market_orderbook(&self, indexer_client: &IndexerClient, market: &str) -> Result<Value, HttpError> {
+        let endpoint = format!("/v4/orderbooks/perpetualMarket/{}", market);
+        indexer_client.get(&endpoint, None).await
     }
 
     pub async fn get_perpetual_market_trades(
         &self, 
-        client: &IndexerClient, 
+        indexer_client: &IndexerClient,
         market: &str, 
         starting_before_or_at_height: Option<i32>, 
         limit: Option<i32>
-    ) -> Result<Response, HttpError> {
-        let mut endpoint = format!("/v4/trades/perpetualMarket/{}", market);
+    ) -> Result<Value, HttpError> {
+        let endpoint = format!("/v4/trades/perpetualMarket/{}", market);
         let mut params = HashMap::new();
         if let Some(height) = starting_before_or_at_height {
             params.insert("createdBeforeOrAtHeight", height.to_string());
@@ -32,19 +32,18 @@ impl Markets {
         if let Some(limit) = limit {
             params.insert("limit", limit.to_string());
         }
-
-        client.get(&endpoint, params).await
+        indexer_client.get(&endpoint, Some(params)).await
     }
 
     pub async fn get_candles(
         &self, 
-        client: &IndexerClient, 
+        indexer_client: &IndexerClient,
         market: &str, 
         resolution: &str, 
         from_iso: Option<&str>, 
         to_iso: Option<&str>, 
         limit: Option<i32>
-    ) -> Result<Response, HttpError> {
+    ) -> Result<Value, HttpError> {
         let endpoint = format!("/v4/candles/perpetualMarkets/{}", market);
         let mut params = HashMap::new();
         params.insert("resolution", resolution.to_string());
@@ -57,17 +56,17 @@ impl Markets {
         if let Some(limit) = limit {
             params.insert("limit", limit.to_string());
         }
-        client.get(&endpoint, Some(params)).await
+        indexer_client.get(&endpoint, Some(params)).await
     }
 
     pub async fn get_perpetual_market_funding(
         &self, 
-        client: &IndexerClient, 
+        indexer_client: &IndexerClient,
         market: &str, 
         effective_before_or_at: Option<&str>, 
         effective_before_or_at_height: Option<i32>, 
         limit: Option<i32>
-    ) -> Result<Response, HttpError> {
+    ) -> Result<Value, HttpError> {
         let endpoint = format!("/v4/historicalFunding/{}", market);
         let mut params = HashMap::new();
         if let Some(effective_before_or_at) = effective_before_or_at {
@@ -79,17 +78,17 @@ impl Markets {
         if let Some(limit) = limit {
             params.insert("limit", limit.to_string());
         }
-        client.get(&endpoint, Some(params)).await
+        indexer_client.get(&endpoint, Some(params)).await
     }
 
     pub async fn get_perpetual_markets_sparklines(
         &self, 
-        client: &IndexerClient, 
+        indexer_client: &IndexerClient,
         period: &str
-    ) -> Result<Response, HttpError> {
+    ) -> Result<Value, HttpError> {
         let endpoint = "/v4/sparklines";
         let mut params = HashMap::new();
         params.insert("timePeriod", period.to_string());
-        client.get(endpoint, Some(params)).await
+        indexer_client.get(endpoint, Some(params)).await
     }
 }
